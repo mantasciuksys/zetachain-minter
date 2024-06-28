@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evire Mint - Mint Your ZETA Token</title>
+  <meta name="description" content="Mint your Zetachain token using Metamask. Free and easy to use.">
+  <meta property="og:title" content=“Zeta Mint - Mint Your Zetachain Token">
+  <meta property="og:description" content="Mint your Zetachain token using Metamask. Free and easy to use.">
+  <meta property="og:image" content="https://github.com/mantasciuksys/zetachain-minter/blob/main/Zetachain%20Minter.png?raw=true">
+  <meta property="og:url" content="http://www.eviremint.xyz"> <!-- Replace with your actual domain -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content=“Zeta Mint - Mint Your Zetachain Token">
+  <meta name="twitter:description" content="Mint your Zeta token using Metamask. Free and easy to use.">
+  <meta name="twitter:image" content="https://github.com/mantasciuksys/zetachain-minter/blob/main/Zetachain%20Minter.png?raw=true">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: rgb(0, 116, 87);
+      display: flex;
+      justify-content: center;
+      align-items: left;
+      height: 100%;
+      margin: 0;
+      position: relative;
+    }
+
+    #container {
+      width: 80%;
+      max-width: 600px;
+      text-align: left;
+    }
+
+    .card {
+      background-color: white;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .btn {
+      background-color: black;
+      color: white;
+      border: 2px solid black;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background-color: white;
+      color: black;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 95%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    label {
+      display: block;
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      text-align: left;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    #address,
+    #hash {
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    #result {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 150px;
+      height: auto;
+    }
+
+    .disclaimer {
+      background-color: #d4edda;
+      color: #155724;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      border: 1px solid #c3e6cb;
+    }
+
+    @media (max-width: 600px) {
+      .logo {
+        position: static;
+        margin: 0 auto 20px auto;
+        display: block;
+      }
+
+      #container {
+        text-align: left;
+      }
+
+      label {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <img src="https://raw.githubusercontent.com/mantasciuksys/zetachain-minter/6be2f67abd387216680183baedba2b59fe2e8dd4/Vector.png" alt="Logo" class="logo">
+    <div class="card" id="signin">
+      <h2>Mint Your Zetachain Token</h2>
+      <p>Start by connecting your MetaMask wallet using the Zetachain Athena testnet.</p>
+      <button class="btn" id="signIn">Connect Wallet</button>
+      <div class="disclaimer">
+        <strong>Warning!</strong> Never connect your main wallet to an unknown website. When you do, test it with an empty wallet.
+      </div>
+    </div>
+    <div class="card">
+      <h2>Zetachain Athens Testnet RPC Information</h2>
+      <p>New RPC URL: https://zetachain-athens-evm.blockpi.network/v1/rpc/public</p>
+      <p>Chain ID: 7001</p>
+      <p>Currency Symbol: ZETA</p>
+      <p>Block Explorer URL: https://athens3.explorer.zetachain.com</p>
+    </div>
+    <div class="card" id="form">
+      <h3>Enter the name, symbol, decimals, and initial supply of your Zetachain (ERC-20) token.</h3>
+      <form onsubmit="create(); return false;">
+        <label for="name">Name:</label>
+        <input type="text" id="name" placeholder="Enter the name of the token" required />
+        <label for="symbol">Symbol:</label>
+        <input type="text" id="symbol" placeholder="Enter the symbol of the token" required />
+        <label for="decimals">Decimals:</label>
+        <input type="number" min="0" max="30" step="1" id="decimals" placeholder="Enter the decimals of the token" required />
+        <label for="supply">Initial supply:</label>
+        <input type="text" id="supply" placeholder="Enter the initial supply of the token" required />
+        <button type="submit" class="btn">Create Token</button>
+      </form>
+    </div>
+    <div class="card hidden" id="tx">
+      <h2>Transaction result from MetaMask</h2>
+      <div id="hash"></div><br/>
+      <button class="btn" onclick="getContractAddress()">Get contract address</button><br/><br/>
+      <div id="contractAddress"></div>      
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const button = document.getElementById('signIn');
+      button.addEventListener('click', async () => {
+        if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
+          console.log('MetaMask is detected');
+          try {
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            console.log('MetaMask connected');
+            button.textContent = 'Connected';
+            button.classList.remove('btn');
+            button.classList.add('btn', 'connected');
+          } catch (error) {
+            console.error('Error connecting to MetaMask:', error);
+            alert('Failed to connect to MetaMask. Please ensure MetaMask is installed and connected.');
+          }
+        } else if (typeof window.web3 !== 'undefined') {
+          // For older dApp browsers that inject window.web3
+          try {
+            await window.web3.currentProvider.enable();
+            console.log('MetaMask connected');
+            button.textContent = 'Connected';
+            button.classList.remove('btn');
+            button.classList.add('btn', 'connected');
+          } catch (error) {
+            console.error('Error connecting to MetaMask:', error);
+            alert('Failed to connect to MetaMask. Please ensure MetaMask is installed and connected.');
+          }
+        } else if (window.navigator.userAgent.includes('Mobi')) {
+          // Mobile device check
+          alert('Please use the MetaMask app to connect.');
+          window.location.href = 'https://metamask.app.link/dapp/http://www.eviremint.xyz/'; // Replace with your actual domain
+        } else {
+          console.error('MetaMask is not installed or its impossible to connect to it.');
+          alert('MetaMask is not installed. Please install MetaMask and try again.');
+        }
+      });
+    });
+  </script>
+
+  <script type="module">
+    import { TatumSDK, Network, MetaMask } from "https://cdn.skypack.dev/@tatumio/tatum";
+
+    async function initApp() {
+      const tatum = await TatumSDK.init({
+        network: Network.ETHEREUM, 
+        apiKey: { v4: 't-646f14a6bfbaf6001c69bca6-646f14a7bfbaf6001c69bcac' }
+      });
+      let address, txId;
+
+      window.create = async () => {
+        const name = document.querySelector("#name").value;
+        const symbol = document.querySelector("#symbol").value;
+        const decimals = parseInt(document.querySelector("#decimals").value);
+        const initialSupply = document.querySelector("#supply").value;
+        try {
+          txId = await tatum.walletProvider.use(MetaMask).createFungibleToken(
+            { name, symbol, decimals, initialSupply }
+          );
+          console.log(txId);
+          document.querySelector("#hash").textContent = txId;
+          document.getElementById("tx").classList.remove("hidden");
+          document.getElementById("form").classList.add("hidden");
+        } catch (e) {
+          console.error(e);
+          alert("Unable to sign and deploy transaction.");
+        }
+      };
+
+      window.getContractAddress = async () => {
+        const contractAddress = await tatum.rpc.getContractAddress(txId);
+        document.querySelector("#contractAddress").textContent =
+          contractAddress ||
+          "Transaction not yet included in the block. Try again later.";
+      };
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
